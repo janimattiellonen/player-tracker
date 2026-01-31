@@ -1,0 +1,25 @@
+{
+  "name": "player-tracker",
+  "version": "1.0.0",
+  "description": "A tool for tracking selected players' PDGA results and notifying if a tracked player performs well",
+  "type": "module",
+  "scripts": {
+    "fetch-player": "tsx src/fetch-player-profile.ts",
+    "parse-player": "tsx src/parse-player-profile.ts"
+  },
+  "keywords": [
+    "pdga",
+    "disc-golf",
+    "player-tracking"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cheerio": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0"
+  }
+}

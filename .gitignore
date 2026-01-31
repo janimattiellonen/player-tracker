@@ -1,0 +1,14 @@
+node_modules/
+dist/
+
+# Keep profiles directory but ignore HTML files (test data)
+profiles/*.html
+
+# OS files
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
