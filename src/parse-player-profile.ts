@@ -10,7 +10,7 @@ const PROJECT_ROOT = join(__dirname, "..");
 const PROFILES_DIR = join(PROJECT_ROOT, "profiles");
 const PDGA_BASE_URL = "https://www.pdga.com";
 
-function parsePlayerProfile(html: string, pdgaNumber: string): PlayerResults {
+export function parsePlayerProfile(html: string, pdgaNumber: string): PlayerResults {
   const $ = cheerio.load(html);
   const results: TournamentResult[] = [];
 
@@ -62,6 +62,19 @@ function parsePlayerProfile(html: string, pdgaNumber: string): PlayerResults {
   };
 }
 
+async function fetchPlayerData(pdgaNumber: string): Promise<string> {
+  // TODO: Replace with real HTTP request to https://www.pdga.com/player/{pdgaNumber}
+  const profilePath = join(PROFILES_DIR, `player-${pdgaNumber}.html`);
+
+  if (!existsSync(profilePath)) {
+    throw new Error(
+      `Profile file not found at ${profilePath}. Please first run: npm run fetch-player ${pdgaNumber}`
+    );
+  }
+
+  return readFile(profilePath, "utf-8");
+}
+
 async function main(): Promise<void> {
   const pdgaNumber = process.argv[2];
 
@@ -76,22 +89,14 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const profilePath = join(PROFILES_DIR, `player-${pdgaNumber}.html`);
-
-  if (!existsSync(profilePath)) {
-    console.error(`Error: Profile file not found at ${profilePath}`);
-    console.error(`Please first run: npm run fetch-player ${pdgaNumber}`);
-    process.exit(1);
-  }
-
   try {
-    const html = await readFile(profilePath, "utf-8");
+    const html = await fetchPlayerData(pdgaNumber);
     const playerResults = parsePlayerProfile(html, pdgaNumber);
 
     console.log(JSON.stringify(playerResults, null, 2));
   } catch (error) {
     if (error instanceof Error) {
-      console.error(`Error parsing profile: ${error.message}`);
+      console.error(`Error: ${error.message}`);
     } else {
       console.error("An unknown error occurred");
     }
@@ -99,4 +104,8 @@ async function main(): Promise<void> {
   }
 }
 
-main();
+// Only run main() when executed directly, not when imported as a module
+const isMainModule = import.meta.url === `file://${process.argv[1]}`;
+if (isMainModule) {
+  main();
+}
