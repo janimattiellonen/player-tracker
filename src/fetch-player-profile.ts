@@ -42,10 +42,10 @@ export async function fetchPlayerHtml(pdgaNumber: string): Promise<string> {
 }
 
 /**
- * Fetches player profile HTML from pdga.com and saves it to disk.
+ * Downloads player profile HTML from pdga.com and saves it to disk.
  * Used by the CLI command for debugging/testing.
  */
-export async function fetchPlayerProfile(pdgaNumber: string): Promise<FetchResult> {
+export async function downloadPlayerProfile(pdgaNumber: string): Promise<FetchResult> {
   if (!pdgaNumber || !/^\d+$/.test(pdgaNumber)) {
     throw new Error("Please provide a valid PDGA number (numeric value)");
   }
@@ -81,7 +81,7 @@ async function main(): Promise<void> {
 
   try {
     console.log(`Fetching player profile from: https://www.pdga.com/player/${pdgaNumber}`);
-    const result = await fetchPlayerProfile(pdgaNumber);
+    const result = await downloadPlayerProfile(pdgaNumber);
     console.log(`Profile saved to: ${result.outputPath}`);
     console.log(`File size: ${result.fileSize} bytes`);
   } catch (error) {
