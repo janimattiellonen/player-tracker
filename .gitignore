@@ -7,6 +7,9 @@ profiles/*.html
 # Local config (use config.example.json as template)
 config.json
 
+# Tracked players list (local configuration)
+tracked_players.txt
+
 # Environment variables
 .env
 .env.local

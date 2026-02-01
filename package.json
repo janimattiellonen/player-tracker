@@ -6,13 +6,17 @@
   "scripts": {
     "fetch-player": "tsx src/fetch-player-profile.ts",
     "parse-player": "tsx src/parse-player-profile.ts",
+    "track": "tsx src/track-players.ts",
+    "scheduler": "tsx src/scheduler.ts",
+    "test-email": "tsx src/test-email.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "db:start": "docker compose up -d",
     "db:stop": "docker compose down",
     "db:migrate": "knex migrate:latest",
     "db:migrate:rollback": "knex migrate:rollback",
-    "db:migrate:make": "knex migrate:make"
+    "db:migrate:make": "knex migrate:make",
+    "db:reset": "knex migrate:rollback --all && knex migrate:latest"
   },
   "keywords": [
     "pdga",
@@ -23,7 +27,10 @@
   "license": "ISC",
   "dependencies": {
     "cheerio": "^1.0.0",
+    "dotenv": "^16.4.0",
     "knex": "^3.1.0",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.9.0",
     "pg": "^8.13.0"
   },
   "devDependencies": {

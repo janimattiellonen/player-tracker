@@ -14,6 +14,7 @@ The tool accepts PDGA numbers of players to track and periodically checks their 
 - Filter results by placement range
 - Persist results in PostgreSQL database
 - Track which results have been processed to avoid duplicate notifications
+- Scheduled tracking with configurable intervals (hourly, daily, custom cron)
 
 ## Tech Stack
 
@@ -23,6 +24,7 @@ The tool accepts PDGA numbers of players to track and periodically checks their 
 - PostgreSQL (database)
 - Knex (migrations & query builder)
 - Docker (containerization)
+- node-cron (scheduling)
 - Vitest (testing)
 
 ## Prerequisites
@@ -182,6 +184,103 @@ Example output:
 }
 ```
 
+### Track players
+
+The tracking system fetches and syncs results for all players listed in `tracked_players.txt`.
+
+Create a `tracked_players.txt` file with PDGA numbers (one per line or comma-separated):
+
+```
+262774
+12345
+67890
+```
+
+Run tracking manually:
+
+```bash
+npm run track sync              # All results
+npm run track sync "1-3"        # Only top 3 placements
+npm run track sync 1            # Only 1st place
+```
+
+View results pending notification:
+
+```bash
+npm run track pending
+```
+
+### Scheduled tracking
+
+Run the scheduler to automatically track players at regular intervals:
+
+```bash
+npm run scheduler
+```
+
+#### Configuration
+
+Configure the scheduler using environment variables:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `TRACK_SCHEDULE` | When to run (preset or cron expression) | `daily` |
+| `TRACK_PLACEMENT` | Placement filter | `1-3` |
+| `TRACK_RUN_ON_START` | Run sync immediately on startup | `true` |
+
+#### Schedule presets
+
+| Preset | Cron Expression | Description |
+|--------|-----------------|-------------|
+| `every-minute` | `* * * * *` | Every minute |
+| `every-5-minutes` | `*/5 * * * *` | Every 5 minutes |
+| `every-15-minutes` | `*/15 * * * *` | Every 15 minutes |
+| `every-30-minutes` | `*/30 * * * *` | Every 30 minutes |
+| `every-hour` | `0 * * * *` | Every hour at :00 |
+| `every-6-hours` | `0 */6 * * *` | Every 6 hours |
+| `every-12-hours` | `0 */12 * * *` | Every 12 hours |
+| `daily` | `0 8 * * *` | Daily at 8:00 AM |
+| `daily-morning` | `0 8 * * *` | Daily at 8:00 AM |
+| `daily-evening` | `0 20 * * *` | Daily at 8:00 PM |
+
+#### Examples
+
+```bash
+# Run every hour, track top 3 placements
+TRACK_SCHEDULE=every-hour TRACK_PLACEMENT=1-3 npm run scheduler
+
+# Run once daily, track only wins
+TRACK_SCHEDULE=daily TRACK_PLACEMENT=1 npm run scheduler
+
+# Custom cron expression (every 2 hours)
+TRACK_SCHEDULE="0 */2 * * *" npm run scheduler
+
+# Skip initial sync on startup
+TRACK_RUN_ON_START=false TRACK_SCHEDULE=every-hour npm run scheduler
+```
+
+#### Using .env file
+
+Create a `.env` file (copy from `.env.example`) for persistent configuration:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env`:
+
+```
+TRACK_SCHEDULE=every-hour
+TRACK_PLACEMENT=1-3
+TRACK_RUN_ON_START=true
+```
+
+Then simply run:
+
+```bash
+npm run scheduler
+```
+
 ## Testing
 
 Run the test suite:
@@ -223,6 +322,8 @@ player-tracker/
 ├── src/
 │   ├── fetch-player-profile.ts  # Fetches player HTML from pdga.com
 │   ├── parse-player-profile.ts  # Parses HTML to extract results
+│   ├── track-players.ts         # Main tracking logic
+│   ├── scheduler.ts             # Scheduled tracking with cron
 │   ├── types.ts                 # TypeScript type definitions
 │   ├── db.ts                    # Database connection
 │   ├── repository.ts            # Database operations
@@ -232,9 +333,11 @@ player-tracker/
 │           └── player-262774.html
 ├── migrations/                  # Knex database migrations
 ├── profiles/                    # Saved player profile HTML files
+├── tracked_players.txt          # PDGA numbers to track (gitignored)
 ├── docker-compose.yml           # Docker configuration
 ├── knexfile.js                  # Knex configuration
 ├── config.example.json          # Example configuration
+├── .env.example                 # Example environment variables
 ├── package.json
 ├── tsconfig.json
 └── README.md
@@ -277,14 +380,14 @@ player-tracker/
 - JSON output of tournament results
 - Placement range filtering
 
-### Phase 2 (Current)
+### Phase 2 (Complete)
 - Docker containerization
 - PostgreSQL database for persisting data
 - Track processed results to avoid duplicates
+- Scheduled tracking with configurable intervals
 
 ### Future Phases
 - Email notifications for top performances
-- Scheduled daily execution
 - Web interface for configuration
 
 ## License
