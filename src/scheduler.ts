@@ -1,3 +1,4 @@
+import "dotenv/config";
 import cron from "node-cron";
 import { trackPlayers } from "./track-players.js";
 import { notifyNewResults } from "./notify.js";
