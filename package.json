@@ -8,6 +8,7 @@
     "parse-player": "tsx src/parse-player-profile.ts",
     "track": "tsx src/track-players.ts",
     "scheduler": "tsx src/scheduler.ts",
+    "notify": "tsx src/notify.ts",
     "test-email": "tsx src/test-email.ts",
     "test": "vitest run",
     "test:watch": "vitest",

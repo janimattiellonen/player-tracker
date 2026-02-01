@@ -15,6 +15,7 @@ The tool accepts PDGA numbers of players to track and periodically checks their 
 - Persist results in PostgreSQL database
 - Track which results have been processed to avoid duplicate notifications
 - Scheduled tracking with configurable intervals (hourly, daily, custom cron)
+- Email notifications for new results (Gmail SMTP supported)
 
 ## Tech Stack
 
@@ -25,6 +26,7 @@ The tool accepts PDGA numbers of players to track and periodically checks their 
 - Knex (migrations & query builder)
 - Docker (containerization)
 - node-cron (scheduling)
+- Nodemailer (email notifications)
 - Vitest (testing)
 
 ## Prerequisites
@@ -227,6 +229,7 @@ Configure the scheduler using environment variables:
 | `TRACK_SCHEDULE` | When to run (preset or cron expression) | `daily` |
 | `TRACK_PLACEMENT` | Placement filter | `1-3` |
 | `TRACK_RUN_ON_START` | Run sync immediately on startup | `true` |
+| `NOTIFY_ENABLED` | Send email notifications after sync | `true` |
 
 #### Schedule presets
 
@@ -281,6 +284,70 @@ Then simply run:
 npm run scheduler
 ```
 
+### Email notifications
+
+Send email notifications for new (unnotified) results:
+
+```bash
+npm run notify
+```
+
+#### Mock mode
+
+For testing without sending real emails, enable mock mode:
+
+```bash
+EMAIL_MOCK_MODE=true npm run notify
+```
+
+This prints the email content to the console instead of sending it.
+
+#### Gmail SMTP setup
+
+To send real emails via Gmail:
+
+1. **Enable 2-Factor Authentication** on your Google account
+2. **Generate an App Password:**
+   - Go to https://myaccount.google.com/apppasswords
+   - Select "Mail" and your device
+   - Copy the 16-character password
+
+3. **Configure `.env`:**
+
+```
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your-email@gmail.com
+SMTP_PASSWORD=your-app-password
+EMAIL_TO=recipient@example.com
+EMAIL_MOCK_MODE=false
+```
+
+#### Test email configuration
+
+Test your email setup with:
+
+```bash
+npm run test-email
+```
+
+Or send to a specific recipient:
+
+```bash
+npm run test-email recipient@example.com
+```
+
+#### Email content
+
+Notifications include:
+- Summary of new results
+- Player PDGA numbers
+- Tournament names with links
+- Placements (1st, 2nd, 3rd, etc.)
+- Dates, tiers, points, and prizes
+- Both plain text and HTML versions
+
 ## Testing
 
 Run the test suite:
@@ -324,13 +391,19 @@ player-tracker/
 │   ├── parse-player-profile.ts  # Parses HTML to extract results
 │   ├── track-players.ts         # Main tracking logic
 │   ├── scheduler.ts             # Scheduled tracking with cron
+│   ├── notify.ts                # Email notification sender
+│   ├── notification-builder.ts  # Builds notification messages
+│   ├── email-service.ts         # Email sending service
+│   ├── test-email.ts            # Email configuration tester
 │   ├── types.ts                 # TypeScript type definitions
 │   ├── db.ts                    # Database connection
 │   ├── repository.ts            # Database operations
 │   └── __tests__/
 │       ├── parse-player-profile.test.ts
+│       ├── notification-builder.test.ts
 │       └── fixtures/
-│           └── player-262774.html
+│           ├── player-262774.html
+│           └── player-27555.html
 ├── migrations/                  # Knex database migrations
 ├── profiles/                    # Saved player profile HTML files
 ├── tracked_players.txt          # PDGA numbers to track (gitignored)
@@ -385,10 +458,11 @@ player-tracker/
 - PostgreSQL database for persisting data
 - Track processed results to avoid duplicates
 - Scheduled tracking with configurable intervals
+- Email notifications for new results (Gmail SMTP)
 
 ### Future Phases
-- Email notifications for top performances
 - Web interface for configuration
+- Support for additional notification channels (Slack, Discord, etc.)
 
 ## License
 

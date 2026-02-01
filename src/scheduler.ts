@@ -1,5 +1,6 @@
 import cron from "node-cron";
 import { trackPlayers } from "./track-players.js";
+import { notifyNewResults } from "./notify.js";
 
 // Cron schedule presets
 const SCHEDULES = {
@@ -43,8 +44,14 @@ function getPlacementFilter(): string {
   return process.env.TRACK_PLACEMENT || "1-3";
 }
 
+function isNotifyEnabled(): boolean {
+  return process.env.NOTIFY_ENABLED !== "false";
+}
+
 async function runTracking(): Promise<void> {
   const placement = getPlacementFilter();
+  const notifyEnabled = isNotifyEnabled();
+
   console.log(`\n[${new Date().toISOString()}] Running scheduled sync...`);
 
   try {
@@ -58,6 +65,17 @@ async function runTracking(): Promise<void> {
           console.log(`  - ${r.pdga_number}: ${r.place} place at ${r.tournament_name}`);
         });
       });
+
+      // Send notifications if enabled
+      if (notifyEnabled) {
+        console.log("\nSending notifications...");
+        const notifyResult = await notifyNewResults();
+        if (notifyResult.success) {
+          console.log(`Notified about ${notifyResult.resultsNotified} result(s)`);
+        } else {
+          console.error(`Notification failed: ${notifyResult.error}`);
+        }
+      }
     }
   } catch (error) {
     console.error("Tracking failed:", error instanceof Error ? error.message : error);
@@ -67,10 +85,12 @@ async function runTracking(): Promise<void> {
 async function main(): Promise<void> {
   const schedule = getSchedule();
   const placement = getPlacementFilter();
+  const notifyEnabled = isNotifyEnabled();
 
   console.log("=== Player Tracker Scheduler ===\n");
   console.log(`Schedule: ${schedule}`);
   console.log(`Placement filter: ${placement}`);
+  console.log(`Notifications: ${notifyEnabled ? "enabled" : "disabled"}`);
   console.log(`\nScheduler started. Press Ctrl+C to stop.\n`);
 
   // Run immediately on startup
