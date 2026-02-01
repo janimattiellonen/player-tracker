@@ -39,4 +39,78 @@ Create a basic typescript project with a package.json file. We want to call the 
 
 For obtaining html code for a given player, create a script named `fetch-player-profile.ts` and make it callable using `npm run fetch-player [PDGA NUMBER]`. This script should store the output of the player profile page in directory `profiles/player-[PDGA NUMBER].html`
 
+## Script for parsing player profile
+
+Create a script named `parse-player-profile.ts` which can be called using `npm run parse-player [PDGA NUMBER]`. At this point, make the script read the file found in `profiles/player-[PDGA NUMBER].html` file. Assume the html file exists. If it doesn't, yield an error and ask the user to first run `npm run fetch-player [PDGA NUMBER]`.
+
+If the file `profiles/player-[PDGA NUMBER].html` exists parse the content for 
+
+- Place
+- Points
+- Tournament
+- Tier
+- Dates
+- Prize
+
+Initially, no requirement for value in "Place". Let's return all results that are found in the html file. The results should be returned in JSON. Create proper type for the results data. 
+
+
+## Unit tests for verifying parse-player-profile.ts
+
+Next up, let's add unit tests for file `parse-player-profile.ts`. 
+
+Install and use vitest framework. For the tests, copy profiles/player-262774.html so that we have an own source file for the tests. 
+
+
+## Fetch players within specified placement
+
+
+Next, let's implement a way to fetch results where palcement is within specified range.
+
+The specified range may be given as a command line argument. 
+
+Allowed values:
+- "" no value given. Fetch all results.
+- "1": include only those results where the placement is "1"
+- "1-3" or "1 - 3": include only those results where the placement is between 1 and 3
+
+In any other case, an error should be returned.
+
+
+## Keeping track of selected players' performances
+
+Currently I need to provide the script the player's PDGA number and placement requirements. In future I may want to track more than 10 players. I need a better way to provide the PDGA numbers. The placement requirement will most likely be same for all players.
+
+Additionally I want to send a notification on NEW results. Therefore we also need to keep track of, which results has already been processed. For example, looking at player profile file `/Users/janimattiellonen/Documents/Development/Frisbeegolf/player-tracker/profiles/player-262774.html` we can see, that the player has 2 results for year 2026. If we assume these two has already been processed, we don't want the script to process this player again, until a third result can be found.
+
+### Persisting player results
+
+I was thinking of persisting the data in a database. The script can then check againsta the database to see, if there are any new results for the given player.
+
+### Updated tech stack
+
+- Docker environment
+- Postgresql
+    - run on port 5430
+
+### Database structure
+
+The following data needs to be persisted:
+- Place
+- Points
+- Tournament
+- Tier
+- Dates
+- Prize
+
+In addition to these, any other columns that help the script to keep track and see, if new results needs to be notified.
+
+### Migrations
+
+I'd lik to use some kind of migration tool / framework to allow me to update the database structure. Suggest something. 
+
+
+
+
+
 

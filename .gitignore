@@ -4,6 +4,13 @@ dist/
 # Keep profiles directory but ignore HTML files (test data)
 profiles/*.html
 
+# Local config (use config.example.json as template)
+config.json
+
+# Environment variables
+.env
+.env.local
+
 # OS files
 .DS_Store
 

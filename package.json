@@ -7,7 +7,12 @@
     "fetch-player": "tsx src/fetch-player-profile.ts",
     "parse-player": "tsx src/parse-player-profile.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "db:start": "docker compose up -d",
+    "db:stop": "docker compose down",
+    "db:migrate": "knex migrate:latest",
+    "db:migrate:rollback": "knex migrate:rollback",
+    "db:migrate:make": "knex migrate:make"
   },
   "keywords": [
     "pdga",
@@ -17,7 +22,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "cheerio": "^1.0.0"
+    "cheerio": "^1.0.0",
+    "knex": "^3.1.0",
+    "pg": "^8.13.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
