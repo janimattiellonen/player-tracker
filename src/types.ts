@@ -14,3 +14,8 @@ export interface PlayerResults {
   pdgaNumber: string;
   results: TournamentResult[];
 }
+
+export interface PlacementRange {
+  min: number;
+  max: number;
+}
