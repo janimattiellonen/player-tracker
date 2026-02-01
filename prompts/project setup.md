@@ -107,7 +107,7 @@ In addition to these, any other columns that help the script to keep track and s
 
 ### Migrations
 
-I'd lik to use some kind of migration tool / framework to allow me to update the database structure. Suggest something. 
+I'd lik to use some kind of migration tool / framework to allow me to update the database structure. Suggest something. I have previous knowledge of knex for migrations.
 
 
 

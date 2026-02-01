@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { fetchPlayerProfile, getProfilePath } from "./fetch-player-profile.js";
+import { fetchPlayerHtml } from "./fetch-player-profile.js";
 import { parsePlayerProfile, parsePlacementRange, filterResultsByPlacement } from "./parse-player-profile.js";
 import { PlayerRepository, StoredResult } from "./repository.js";
 import { getDb, closeDb } from "./db.js";
@@ -75,13 +75,9 @@ async function processPlayer(
     }
     result.playerName = player.name;
 
-    // Fetch the player's profile HTML
+    // Fetch the player's profile HTML directly from pdga.com
     console.log(`  Fetching profile...`);
-    await fetchPlayerProfile(pdgaNumber);
-
-    // Read and parse the HTML
-    const profilePath = getProfilePath(pdgaNumber);
-    const html = await readFile(profilePath, "utf-8");
+    const html = await fetchPlayerHtml(pdgaNumber);
     const parsed = parsePlayerProfile(html, pdgaNumber);
 
     // Apply placement filter

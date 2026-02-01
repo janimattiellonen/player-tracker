@@ -13,33 +13,50 @@ export interface FetchResult {
   fileSize: number;
 }
 
-export async function fetchPlayerProfile(pdgaNumber: string): Promise<FetchResult> {
+const HTTP_HEADERS = {
+  "User-Agent":
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  Accept:
+    "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+  "Accept-Language": "en-US,en;q=0.5",
+};
+
+/**
+ * Fetches player profile HTML from pdga.com and returns it as a string.
+ * Does not save to disk.
+ */
+export async function fetchPlayerHtml(pdgaNumber: string): Promise<string> {
   if (!pdgaNumber || !/^\d+$/.test(pdgaNumber)) {
     throw new Error("Please provide a valid PDGA number (numeric value)");
   }
 
   const url = `https://www.pdga.com/player/${pdgaNumber}`;
+
+  const response = await fetch(url, { headers: HTTP_HEADERS });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! Status: ${response.status}`);
+  }
+
+  return response.text();
+}
+
+/**
+ * Fetches player profile HTML from pdga.com and saves it to disk.
+ * Used by the CLI command for debugging/testing.
+ */
+export async function fetchPlayerProfile(pdgaNumber: string): Promise<FetchResult> {
+  if (!pdgaNumber || !/^\d+$/.test(pdgaNumber)) {
+    throw new Error("Please provide a valid PDGA number (numeric value)");
+  }
+
   const outputPath = join(PROFILES_DIR, `player-${pdgaNumber}.html`);
 
   if (!existsSync(PROFILES_DIR)) {
     await mkdir(PROFILES_DIR, { recursive: true });
   }
 
-  const response = await fetch(url, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      Accept:
-        "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-      "Accept-Language": "en-US,en;q=0.5",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`HTTP error! Status: ${response.status}`);
-  }
-
-  const html = await response.text();
+  const html = await fetchPlayerHtml(pdgaNumber);
   await writeFile(outputPath, html, "utf-8");
 
   return {
