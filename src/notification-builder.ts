@@ -3,6 +3,7 @@ import type { StoredResult } from "./repository.js";
 export interface NotificationData {
   results: StoredResult[];
   generatedAt: string;
+  playerNames?: Map<string, string>;
 }
 
 export interface NotificationMessage {
@@ -32,6 +33,11 @@ function formatPlacement(place: string): string {
   return `${num}${suffix}`;
 }
 
+function formatPlayerLabel(pdgaNumber: string, playerNames?: Map<string, string>): string {
+  const name = playerNames?.get(pdgaNumber);
+  return name ? `Player #${pdgaNumber} (${name})` : `Player #${pdgaNumber}`;
+}
+
 function buildTextMessage(data: NotificationData): string {
   const { results } = data;
   const grouped = groupResultsByPlayer(results);
@@ -43,7 +49,7 @@ function buildTextMessage(data: NotificationData): string {
   text += `Found ${resultCount} new result(s) for ${playerCount} player(s).\n\n`;
 
   for (const [pdgaNumber, playerResults] of grouped) {
-    text += `Player #${pdgaNumber}\n`;
+    text += `${formatPlayerLabel(pdgaNumber, data.playerNames)}\n`;
     text += `${"-".repeat(30)}\n`;
 
     for (const result of playerResults) {
@@ -111,7 +117,7 @@ function buildHtmlMessage(data: NotificationData): string {
   for (const [pdgaNumber, playerResults] of grouped) {
     html += `
   <div class="player-section">
-    <div class="player-header">Player #${pdgaNumber}</div>
+    <div class="player-header">${formatPlayerLabel(pdgaNumber, data.playerNames)}</div>
 `;
 
     for (const result of playerResults) {
@@ -157,7 +163,9 @@ function buildSubject(data: NotificationData): string {
 
   if (resultCount === 1) {
     const result = results[0];
-    return `PDGA: ${formatPlacement(result.place)} place for #${result.pdga_number} at ${result.tournament_name}`;
+    const name = data.playerNames?.get(result.pdga_number);
+    const playerRef = name ? `#${result.pdga_number} (${name})` : `#${result.pdga_number}`;
+    return `PDGA: ${formatPlacement(result.place)} place for ${playerRef} at ${result.tournament_name}`;
   }
 
   return `PDGA: ${resultCount} new result(s) for ${playerCount} player(s)`;

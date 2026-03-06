@@ -1,6 +1,7 @@
 import "dotenv/config";
+import { watch } from "node:fs";
 import cron from "node-cron";
-import { trackPlayers } from "./track-players.js";
+import { trackPlayers, TRACKED_PLAYERS_FILE } from "./track-players.js";
 import { notifyNewResults } from "./notify.js";
 
 // Cron schedule presets
@@ -49,6 +50,69 @@ function isNotifyEnabled(): boolean {
   return process.env.NOTIFY_ENABLED !== "false";
 }
 
+function isFileWatchEnabled(): boolean {
+  return process.env.TRACK_FILE_WATCH !== "false";
+}
+
+let isRunning = false;
+let pendingRerun = false;
+
+async function safeRunTracking(trigger: string): Promise<void> {
+  if (isRunning) {
+    console.log(`[${new Date().toISOString()}] Sync already in progress (trigger: ${trigger}), queuing re-run.`);
+    pendingRerun = true;
+    return;
+  }
+
+  isRunning = true;
+  try {
+    await runTracking();
+  } finally {
+    isRunning = false;
+  }
+
+  if (pendingRerun) {
+    pendingRerun = false;
+    console.log(`[${new Date().toISOString()}] Running queued re-sync...`);
+    await safeRunTracking("queued");
+  }
+}
+
+function startFileWatcher(): void {
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  const DEBOUNCE_MS = 1000;
+
+  try {
+    const watcher = watch(TRACKED_PLAYERS_FILE, (eventType) => {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+
+      debounceTimer = setTimeout(() => {
+        debounceTimer = null;
+        console.log(`\n[${new Date().toISOString()}] Detected change to tracked_players.txt (${eventType})`);
+        safeRunTracking("file-change");
+      }, DEBOUNCE_MS);
+    });
+
+    watcher.on("error", (error) => {
+      console.error("File watcher error:", error.message);
+    });
+
+    process.on("SIGINT", () => {
+      watcher.close();
+    });
+
+    console.log(`Watching: ${TRACKED_PLAYERS_FILE}`);
+  } catch (error) {
+    console.error(
+      "Could not start file watcher:",
+      error instanceof Error ? error.message : error
+    );
+    console.error("File changes will not trigger automatic syncs.");
+  }
+}
+
 async function runTracking(): Promise<void> {
   const placement = getPlacementFilter();
   const notifyEnabled = isNotifyEnabled();
@@ -88,22 +152,30 @@ async function main(): Promise<void> {
   const placement = getPlacementFilter();
   const notifyEnabled = isNotifyEnabled();
 
+  const fileWatchEnabled = isFileWatchEnabled();
+
   console.log("=== Player Tracker Scheduler ===\n");
   console.log(`Schedule: ${schedule}`);
   console.log(`Placement filter: ${placement}`);
   console.log(`Notifications: ${notifyEnabled ? "enabled" : "disabled"}`);
+  console.log(`File watching: ${fileWatchEnabled ? "enabled" : "disabled"}`);
   console.log(`\nScheduler started. Press Ctrl+C to stop.\n`);
 
   // Run immediately on startup
   if (process.env.TRACK_RUN_ON_START !== "false") {
     console.log("Running initial sync...");
-    await runTracking();
+    await safeRunTracking("startup");
   }
 
   // Schedule recurring runs
   cron.schedule(schedule, () => {
-    runTracking();
+    safeRunTracking("cron");
   });
+
+  // Watch for file changes
+  if (fileWatchEnabled) {
+    startFileWatcher();
+  }
 
   // Keep the process running
   process.on("SIGINT", () => {

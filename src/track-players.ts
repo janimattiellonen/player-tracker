@@ -10,7 +10,7 @@ import type { PlacementRange } from "./types.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = join(__dirname, "..");
-const TRACKED_PLAYERS_FILE = join(PROJECT_ROOT, "tracked_players.txt");
+export const TRACKED_PLAYERS_FILE = join(PROJECT_ROOT, "tracked_players.txt");
 
 interface TrackingResult {
   pdgaNumber: string;
@@ -31,33 +31,46 @@ interface TrackingReport {
   };
 }
 
-async function readTrackedPlayers(): Promise<string[]> {
+interface TrackedPlayerEntry {
+  pdgaNumber: string;
+  name?: string;
+}
+
+async function readTrackedPlayers(): Promise<TrackedPlayerEntry[]> {
   if (!existsSync(TRACKED_PLAYERS_FILE)) {
     throw new Error(
       `Tracked players file not found: ${TRACKED_PLAYERS_FILE}\n` +
-      `Create this file with comma or newline separated PDGA numbers.`
+      `Create this file with comma or newline separated PDGA numbers.\n` +
+      `Optionally include player names: 12345|Player Name`
     );
   }
 
   const content = await readFile(TRACKED_PLAYERS_FILE, "utf-8");
 
   // Support both comma-separated and newline-separated formats
-  const pdgaNumbers = content
+  // Each entry can be "12345" or "12345|Player Name"
+  const entries = content
     .split(/[,\n]/)
     .map((n) => n.trim())
-    .filter((n) => n.length > 0 && /^\d+$/.test(n));
+    .filter((n) => n.length > 0)
+    .map((entry) => {
+      const [pdgaNumber, name] = entry.split("|").map((s) => s.trim());
+      return { pdgaNumber, name: name || undefined };
+    })
+    .filter((e) => /^\d+$/.test(e.pdgaNumber));
 
-  if (pdgaNumbers.length === 0) {
+  if (entries.length === 0) {
     throw new Error("No valid PDGA numbers found in tracked_players.txt");
   }
 
-  return pdgaNumbers;
+  return entries;
 }
 
 async function processPlayer(
   pdgaNumber: string,
   repository: PlayerRepository,
-  placementRange: PlacementRange | null
+  placementRange: PlacementRange | null,
+  nameFromFile?: string
 ): Promise<TrackingResult> {
   const result: TrackingResult = {
     pdgaNumber,
@@ -70,8 +83,10 @@ async function processPlayer(
     // Ensure player exists in tracked_players table
     let player = await repository.getTrackedPlayer(pdgaNumber);
     if (!player) {
-      player = await repository.addTrackedPlayer(pdgaNumber);
+      player = await repository.addTrackedPlayer(pdgaNumber, nameFromFile);
       console.log(`  Added new player to database: ${pdgaNumber}`);
+    } else if (nameFromFile && player.name !== nameFromFile) {
+      player = await repository.updateTrackedPlayer(pdgaNumber, { name: nameFromFile }) || player;
     }
     result.playerName = player.name;
 
@@ -128,8 +143,8 @@ async function trackPlayers(placementArg?: string): Promise<TrackingReport> {
     report.placementFilter = parsePlacementRange(placementArg);
 
     // Read tracked players
-    const pdgaNumbers = await readTrackedPlayers();
-    console.log(`Found ${pdgaNumbers.length} player(s) to track`);
+    const entries = await readTrackedPlayers();
+    console.log(`Found ${entries.length} player(s) to track`);
     if (report.placementFilter) {
       console.log(
         `Placement filter: ${report.placementFilter.min}-${report.placementFilter.max}`
@@ -139,9 +154,11 @@ async function trackPlayers(placementArg?: string): Promise<TrackingReport> {
     const repository = new PlayerRepository();
 
     // Process each player
-    for (const pdgaNumber of pdgaNumbers) {
-      console.log(`\nProcessing player ${pdgaNumber}...`);
-      const result = await processPlayer(pdgaNumber, repository, report.placementFilter);
+    for (let i = 0; i < entries.length; i++) {
+      const entry = entries[i];
+      const label = entry.name ? `${entry.pdgaNumber} (${entry.name})` : entry.pdgaNumber;
+      console.log(`\nProcessing player ${label}...`);
+      const result = await processPlayer(entry.pdgaNumber, repository, report.placementFilter, entry.name);
       report.results.push(result);
       report.summary.playersProcessed++;
 
@@ -151,7 +168,7 @@ async function trackPlayers(placementArg?: string): Promise<TrackingReport> {
       report.summary.totalNewResults += result.newResults.length;
 
       // Small delay between requests to be nice to pdga.com
-      if (pdgaNumbers.indexOf(pdgaNumber) < pdgaNumbers.length - 1) {
+      if (i < entries.length - 1) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     }

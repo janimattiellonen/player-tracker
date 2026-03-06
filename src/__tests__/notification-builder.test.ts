@@ -292,3 +292,54 @@ describe("buildNotificationMessage for single result", () => {
     expect(message.subject).toContain("Kirkkonummen Talvi By Fribakisat.fi");
   });
 });
+
+describe("buildNotificationMessage with player names", () => {
+  const playerNames = new Map([
+    ["262774", "Antti Kärpijoki"],
+  ]);
+
+  it("should include player name in text when available", () => {
+    const data = {
+      results: player262774Results,
+      generatedAt: "2026-01-26T10:00:00.000Z",
+      playerNames,
+    };
+    const message = buildNotificationMessage(data);
+
+    expect(message.text).toContain("Player #262774 (Antti Kärpijoki)");
+  });
+
+  it("should include player name in HTML when available", () => {
+    const data = {
+      results: player262774Results,
+      generatedAt: "2026-01-26T10:00:00.000Z",
+      playerNames,
+    };
+    const message = buildNotificationMessage(data);
+
+    expect(message.html).toContain("Player #262774 (Antti Kärpijoki)");
+  });
+
+  it("should include player name in subject for single result", () => {
+    const data = {
+      results: [player262774Results[1]],
+      generatedAt: "2026-01-26T10:00:00.000Z",
+      playerNames,
+    };
+    const message = buildNotificationMessage(data);
+
+    expect(message.subject).toContain("#262774 (Antti Kärpijoki)");
+  });
+
+  it("should show only PDGA number when name is not in the map", () => {
+    const data = {
+      results: player27555Results,
+      generatedAt: "2026-01-26T10:00:00.000Z",
+      playerNames,
+    };
+    const message = buildNotificationMessage(data);
+
+    expect(message.text).toContain("Player #27555");
+    expect(message.text).not.toContain("Player #27555 (");
+  });
+});

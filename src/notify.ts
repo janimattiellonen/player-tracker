@@ -29,10 +29,21 @@ export async function notifyNewResults(): Promise<NotifyResult> {
 
     console.log(`Found ${results.length} unnotified result(s).`);
 
+    // Look up player names
+    const pdgaNumbers = [...new Set(results.map((r) => r.pdga_number))];
+    const playerNames = new Map<string, string>();
+    for (const pdgaNumber of pdgaNumbers) {
+      const player = await repository.getTrackedPlayer(pdgaNumber);
+      if (player?.name) {
+        playerNames.set(pdgaNumber, player.name);
+      }
+    }
+
     // Build notification message
     const notificationData = {
       results,
       generatedAt: new Date().toISOString(),
+      playerNames,
     };
     const message = buildNotificationMessage(notificationData);
 
