@@ -52,9 +52,7 @@ export class PlayerRepository {
   }
 
   async getTrackedPlayer(pdgaNumber: string): Promise<TrackedPlayer | undefined> {
-    return this.db<TrackedPlayer>("tracked_players")
-      .where("pdga_number", pdgaNumber)
-      .first();
+    return this.db<TrackedPlayer>("tracked_players").where("pdga_number", pdgaNumber).first();
   }
 
   async addTrackedPlayer(pdgaNumber: string, name?: string): Promise<TrackedPlayer> {
