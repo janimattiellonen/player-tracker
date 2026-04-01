@@ -1,11 +1,11 @@
 import "dotenv/config";
-import { getEmailConfig, createMailer } from "./email-service.js";
+import { getEmailConfig, createMailer, getSender } from "./email-service.js";
 import type { Mailer } from "./mailer.js";
 
 async function sendTestEmail(): Promise<void> {
   const config = getEmailConfig();
   const recipient = process.argv[2] || config.recipient;
-  const from = config.provider === "resend" ? config.resendFrom : config.user;
+  const from = getSender(config);
 
   console.log("=== Email Test ===\n");
   console.log(`Provider: ${config.provider}`);

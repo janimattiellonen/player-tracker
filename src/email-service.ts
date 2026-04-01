@@ -78,11 +78,15 @@ export function createMailer(config: EmailConfig): Mailer {
   });
 }
 
-function getSender(config: EmailConfig): string {
+export function getSender(config: EmailConfig): string {
   return config.provider === "resend" ? config.resendFrom : config.user;
 }
 
-export async function sendEmail(config: EmailConfig, mailer: Mailer | null, message: NotificationMessage): Promise<SendResult> {
+export async function sendEmail(
+  config: EmailConfig,
+  mailer: Mailer | null,
+  message: NotificationMessage
+): Promise<SendResult> {
   // Mock mode - just print the message
   if (config.mockMode) {
     console.log("\n" + "=".repeat(60));

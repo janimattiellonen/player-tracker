@@ -28,8 +28,7 @@ function formatPlacement(place: string): string {
   const num = parseInt(place, 10);
   if (isNaN(num)) return place;
 
-  const suffix =
-    num === 1 ? "st" : num === 2 ? "nd" : num === 3 ? "rd" : "th";
+  const suffix = num === 1 ? "st" : num === 2 ? "nd" : num === 3 ? "rd" : "th";
   return `${num}${suffix}`;
 }
 

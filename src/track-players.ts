@@ -3,9 +3,13 @@ import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { fetchPlayerHtml } from "./fetch-player-profile.js";
-import { parsePlayerProfile, parsePlacementRange, filterResultsByPlacement } from "./parse-player-profile.js";
+import {
+  parsePlayerProfile,
+  parsePlacementRange,
+  filterResultsByPlacement,
+} from "./parse-player-profile.js";
 import { PlayerRepository, StoredResult } from "./repository.js";
-import { getDb, closeDb } from "./db.js";
+import { closeDb } from "./db.js";
 import type { PlacementRange } from "./types.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -40,8 +44,8 @@ async function readTrackedPlayers(): Promise<TrackedPlayerEntry[]> {
   if (!existsSync(TRACKED_PLAYERS_FILE)) {
     throw new Error(
       `Tracked players file not found: ${TRACKED_PLAYERS_FILE}\n` +
-      `Create this file with comma or newline separated PDGA numbers.\n` +
-      `Optionally include player names: 12345|Player Name`
+        `Create this file with comma or newline separated PDGA numbers.\n` +
+        `Optionally include player names: 12345|Player Name`
     );
   }
 
@@ -86,7 +90,7 @@ async function processPlayer(
       player = await repository.addTrackedPlayer(pdgaNumber, nameFromFile);
       console.log(`  Added new player to database: ${pdgaNumber}`);
     } else if (nameFromFile && player.name !== nameFromFile) {
-      player = await repository.updateTrackedPlayer(pdgaNumber, { name: nameFromFile }) || player;
+      player = (await repository.updateTrackedPlayer(pdgaNumber, { name: nameFromFile })) || player;
     }
     result.playerName = player.name;
 
@@ -103,15 +107,11 @@ async function processPlayer(
     const existingUrls = await repository.getExistingTournamentUrls(pdgaNumber);
 
     // Find truly new results
-    const newResults = filteredResults.filter(
-      (r) => !existingUrls.has(r.tournament.url)
-    );
+    const newResults = filteredResults.filter((r) => !existingUrls.has(r.tournament.url));
 
     if (newResults.length > 0) {
       // Convert and save new results
-      const toSave = newResults.map((r) =>
-        repository.convertToNewResult(pdgaNumber, r)
-      );
+      const toSave = newResults.map((r) => repository.convertToNewResult(pdgaNumber, r));
       const saved = await repository.saveResults(toSave);
       result.newResults = saved;
       console.log(`  Found ${saved.length} new result(s)`);
@@ -146,9 +146,7 @@ async function trackPlayers(placementArg?: string): Promise<TrackingReport> {
     const entries = await readTrackedPlayers();
     console.log(`Found ${entries.length} player(s) to track`);
     if (report.placementFilter) {
-      console.log(
-        `Placement filter: ${report.placementFilter.min}-${report.placementFilter.max}`
-      );
+      console.log(`Placement filter: ${report.placementFilter.min}-${report.placementFilter.max}`);
     }
 
     const repository = new PlayerRepository();
@@ -158,7 +156,12 @@ async function trackPlayers(placementArg?: string): Promise<TrackingReport> {
       const entry = entries[i];
       const label = entry.name ? `${entry.pdgaNumber} (${entry.name})` : entry.pdgaNumber;
       console.log(`\nProcessing player ${label}...`);
-      const result = await processPlayer(entry.pdgaNumber, repository, report.placementFilter, entry.name);
+      const result = await processPlayer(
+        entry.pdgaNumber,
+        repository,
+        report.placementFilter,
+        entry.name
+      );
       report.results.push(result);
       report.summary.playersProcessed++;
 
@@ -225,8 +228,8 @@ async function main(): Promise<void> {
     console.log("  help              Show this help message");
     console.log("");
     console.log("Placement filter examples:");
-    console.log('  npm run track sync         # All results');
-    console.log('  npm run track sync 1       # Only 1st place');
+    console.log("  npm run track sync         # All results");
+    console.log("  npm run track sync 1       # Only 1st place");
     console.log('  npm run track sync "1-5"   # Top 5 placements');
   } else {
     console.error(`Unknown command: ${command}`);

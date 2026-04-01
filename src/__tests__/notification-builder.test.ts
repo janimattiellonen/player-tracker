@@ -294,9 +294,7 @@ describe("buildNotificationMessage for single result", () => {
 });
 
 describe("buildNotificationMessage with player names", () => {
-  const playerNames = new Map([
-    ["262774", "Antti Kärpijoki"],
-  ]);
+  const playerNames = new Map([["262774", "Antti Kärpijoki"]]);
 
   it("should include player name in text when available", () => {
     const data = {

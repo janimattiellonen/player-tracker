@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { PlayerRepository } from "./repository.js";
-import { getDb, closeDb } from "./db.js";
+import { closeDb } from "./db.js";
 import { buildNotificationMessage } from "./notification-builder.js";
 import { sendEmail, getEmailConfig, createMailer } from "./email-service.js";
 

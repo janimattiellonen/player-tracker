@@ -159,9 +159,7 @@ describe("parsePlacementRange", () => {
   });
 
   it("should throw error for invalid format", () => {
-    expect(() => parsePlacementRange("invalid")).toThrow(
-      'Invalid placement format: "invalid"'
-    );
+    expect(() => parsePlacementRange("invalid")).toThrow('Invalid placement format: "invalid"');
     expect(() => parsePlacementRange("1-2-3")).toThrow("Invalid placement format");
     expect(() => parsePlacementRange("abc-def")).toThrow("Invalid placement format");
   });

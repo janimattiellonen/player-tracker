@@ -13,7 +13,7 @@ const SCHEDULES = {
   "every-hour": "0 * * * *",
   "every-6-hours": "0 */6 * * *",
   "every-12-hours": "0 */12 * * *",
-  "daily": "0 8 * * *", // 8:00 AM
+  daily: "0 8 * * *", // 8:00 AM
   "daily-morning": "0 8 * * *", // 8:00 AM
   "daily-evening": "0 20 * * *", // 8:00 PM
 } as const;
@@ -59,7 +59,9 @@ let pendingRerun = false;
 
 async function safeRunTracking(trigger: string): Promise<void> {
   if (isRunning) {
-    console.log(`[${new Date().toISOString()}] Sync already in progress (trigger: ${trigger}), queuing re-run.`);
+    console.log(
+      `[${new Date().toISOString()}] Sync already in progress (trigger: ${trigger}), queuing re-run.`
+    );
     pendingRerun = true;
     return;
   }
@@ -90,7 +92,9 @@ function startFileWatcher(): void {
 
       debounceTimer = setTimeout(() => {
         debounceTimer = null;
-        console.log(`\n[${new Date().toISOString()}] Detected change to tracked_players.txt (${eventType})`);
+        console.log(
+          `\n[${new Date().toISOString()}] Detected change to tracked_players.txt (${eventType})`
+        );
         safeRunTracking("file-change");
       }, DEBOUNCE_MS);
     });
@@ -105,10 +109,7 @@ function startFileWatcher(): void {
 
     console.log(`Watching: ${TRACKED_PLAYERS_FILE}`);
   } catch (error) {
-    console.error(
-      "Could not start file watcher:",
-      error instanceof Error ? error.message : error
-    );
+    console.error("Could not start file watcher:", error instanceof Error ? error.message : error);
     console.error("File changes will not trigger automatic syncs.");
   }
 }
@@ -121,7 +122,9 @@ async function runTracking(): Promise<void> {
 
   try {
     const report = await trackPlayers(placement);
-    console.log(`Completed: ${report.summary.playersProcessed} players, ${report.summary.totalNewResults} new results`);
+    console.log(
+      `Completed: ${report.summary.playersProcessed} players, ${report.summary.totalNewResults} new results`
+    );
 
     if (report.summary.totalNewResults > 0) {
       console.log("\nNew results found:");
