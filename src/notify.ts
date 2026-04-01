@@ -50,8 +50,8 @@ export async function notifyNewResults(): Promise<NotifyResult> {
 
     // Send email
     console.log("Sending notification email...");
-    const mailer = createMailer(emailConfig);
-    const sendResult = await sendEmail(mailer, message);
+    const mailer = emailConfig.mockMode ? null : createMailer(emailConfig);
+    const sendResult = await sendEmail(emailConfig, mailer, message);
 
     if (!sendResult.success) {
       console.error(`Failed to send email: ${sendResult.error}`);

@@ -36,6 +36,11 @@ async function sendTestEmail(): Promise<void> {
     }
   }
 
+  if (!recipient) {
+    console.error("Error: No recipient configured. Set EMAIL_TO in .env or pass as argument.");
+    process.exit(1);
+  }
+
   console.log("Sending test email...");
 
   try {
