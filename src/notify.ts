@@ -2,7 +2,7 @@ import "dotenv/config";
 import { PlayerRepository } from "./repository.js";
 import { getDb, closeDb } from "./db.js";
 import { buildNotificationMessage } from "./notification-builder.js";
-import { sendEmail } from "./email-service.js";
+import { sendEmail, getEmailConfig, createMailer } from "./email-service.js";
 
 interface NotifyResult {
   success: boolean;
@@ -13,6 +13,7 @@ interface NotifyResult {
 
 export async function notifyNewResults(): Promise<NotifyResult> {
   const repository = new PlayerRepository();
+  const emailConfig = getEmailConfig();
 
   try {
     // Fetch unnotified results
@@ -49,7 +50,8 @@ export async function notifyNewResults(): Promise<NotifyResult> {
 
     // Send email
     console.log("Sending notification email...");
-    const sendResult = await sendEmail(message);
+    const mailer = createMailer(emailConfig);
+    const sendResult = await sendEmail(mailer, message);
 
     if (!sendResult.success) {
       console.error(`Failed to send email: ${sendResult.error}`);
